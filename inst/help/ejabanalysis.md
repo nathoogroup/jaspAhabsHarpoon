@@ -24,7 +24,7 @@ The method works as follows. For each result, an approximate objective Bayes fac
 - **Size of the Grid**: The number of candidate $C$ values evaluated during the grid search. A larger grid gives a more precise estimate of $C^*(\alpha)$ at the cost of computation time. Default is 200.
 
 #### Plots
-- **Calibration plot (adaptive $C^*$)**: Displays three plots showing the calibration results: (1) the observed contradiction rate vs. $\alpha$, with the ideal diagonal reference line; (2) the estimated $C^*(\alpha)$ as a function of $\alpha$; and (3) a diagnostic QQ-plot of the flagged candidates.
+- **Calibration plot (integral $C^*$)**: Displays two plots showing the calibration results: (1) the observed contradiction rate vs. $\alpha$, with the ideal diagonal reference line; and (2) a diagnostic QQ-plot of the flagged candidates.
 - **Data summary ($\ln(\text{eJAB01})$ vs p-value)**: A scatterplot of $\ln(\text{eJAB01})$ against p-value for all results with $p < \alpha$, with colour bands indicating regions of evidence for $H_0$ (green), ambiguity (grey), and evidence against $H_0$ (red). Candidate Type I errors are circled in red.
 
 ### Output
@@ -46,9 +46,6 @@ A table listing each result flagged as a potential Type I error, with columns:
 
 #### Calibration Curve
 Shows the observed proportion of contradictions as a function of $\alpha$ alongside the ideal diagonal reference (dashed red). A well-calibrated $C^*(\alpha)$ produces a curve close to the diagonal.
-
-#### $C^*(\alpha)$ vs $\alpha$
-Shows how the estimated threshold changes across the full range of $\alpha$ values. The dotted horizontal line at $C^* = 1$ marks the boundary between evidence favouring $H_0$ and $H_1$.
 
 #### Diagnostic QQ-Plot
 A uniform QQ-plot of the candidate results under the null hypothesis of uniformity. Simultaneous 95% confidence bands (dashed grey) are shown when there are at least 2 candidates. Points falling outside the bands indicate potential departures from expected Type I error behaviour.

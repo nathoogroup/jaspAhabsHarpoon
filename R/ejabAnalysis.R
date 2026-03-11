@@ -30,15 +30,11 @@ ejabAnalysis <- function(jaspResults, dataset, options) {
   # Compute eJAB values
   ejab_vals <- ejabT1E::ejab01(p_vals, n_vals, q_vals)
 
-  # Estimate C* for different alpha values and get C* at the specified alpha
-  fit_alpha <- ejabT1E::estimate_Cstar_alpha(p_vals, ejab_vals, up = up,
-                                              grid_range = grid_range, grid_n = grid_n)
-  # Find C* at the specified alpha (find nearest alpha in grid)
-  nearest_idx <- which.min(abs(fit_alpha$alpha_grid - alpha))
-  Cstar_at_alpha <- fit_alpha$Cstar_alpha[nearest_idx]
-  
-  # Also compute the objective at this C* for the summary table
-  objective_at_alpha <- ejabT1E::objective_C(Cstar_at_alpha, p_vals, ejab_vals, up)
+  # Estimate C* using the integral method (minimises integrated squared deviation)
+  fit <- ejabT1E::estimate_Cstar(p_vals, ejab_vals, up = up,
+                                  grid_range = grid_range, grid_n = grid_n)
+  Cstar_at_alpha <- fit$Cstar
+  objective_at_alpha <- fit$objective
 
   # Detect candidates using C* at the specified alpha
   candidates_idx <- ejabT1E::detect_type1(p_vals, ejab_vals, alpha, Cstar_at_alpha)
@@ -102,17 +98,20 @@ ejabAnalysis <- function(jaspResults, dataset, options) {
 
     # Plot 1: Calibration curve - observed proportion vs alpha
     if (is.null(jaspResults[["calibrationCurve"]])) {
-      calDf <- data.frame(alpha = fit_alpha$alpha_grid,
-                          proportion = fit_alpha$proportions)
+      alpha_grid <- seq(0, up, length.out = 200)[-1]
+      N_cal <- length(p_vals)
+      proportions <- vapply(alpha_grid, function(a)
+        sum(p_vals < a & ejab_vals > Cstar_at_alpha) / N_cal, numeric(1))
+      calDf <- data.frame(alpha = alpha_grid, proportion = proportions)
       refDf <- data.frame(alpha = c(0, up), proportion = c(0, 1))
 
       p1 <- ggplot2::ggplot(calDf, ggplot2::aes(x = alpha, y = proportion)) +
         ggplot2::geom_line(linewidth = 1) +
         ggplot2::geom_line(data = refDf, linetype = "dashed", color = "red", linewidth = 1) +
         ggplot2::scale_x_continuous(limits = c(0, up)) +
-        ggplot2::scale_y_continuous(limits = c(0, max(fit_alpha$proportions, 1))) +
+        ggplot2::scale_y_continuous(limits = c(0, max(proportions, 1))) +
         ggplot2::labs(x = expression(alpha), y = "Observed Proportion",
-                      title = "Calibration using adaptive C*(alpha)") +
+                      title = "Calibration using integral C*(alpha)") +
         jaspGraphs::geom_rangeframe() +
         jaspGraphs::themeJaspRaw()
 
@@ -123,40 +122,28 @@ ejabAnalysis <- function(jaspResults, dataset, options) {
       jaspResults[["calibrationCurve"]] <- calCurve
     }
 
-    # Plot 2: C*(alpha) vs alpha
-    if (is.null(jaspResults[["cstarAlphaPlot"]])) {
-      csDf <- data.frame(alpha = fit_alpha$alpha_grid,
-                         Cstar = fit_alpha$Cstar_alpha)
+    # Plot 2 (formerly C*(alpha) vs alpha) removed — not meaningful for integral method
 
-      p2 <- ggplot2::ggplot(csDf, ggplot2::aes(x = alpha, y = Cstar)) +
-        ggplot2::geom_line(linewidth = 1) +
-        ggplot2::geom_hline(yintercept = 1, linetype = "dotted", color = "grey50") +
-        ggplot2::labs(x = expression(alpha),
-                      y = expression(C^"*" * (alpha)),
-                      title = "C*(alpha) vs alpha") +
-        jaspGraphs::geom_rangeframe() +
-        jaspGraphs::themeJaspRaw()
-
-      csPlot <- createJaspPlot(plot = p2,
-                                title = gettext("C*(alpha) vs alpha"),
-                                width = 480, height = 400)
-      csPlot$dependOn(allDeps)
-      jaspResults[["cstarAlphaPlot"]] <- csPlot
-    }
-
-    # Plot 3: Diagnostic QQ-plot
+    # Plot 3: Diagnostic QQ-plot (logic from ejabT1E::diagnostic_qqplot)
     if (is.null(jaspResults[["qqPlot"]])) {
       if (length(candidates_idx) > 0) {
         U <- ejabT1E::diagnostic_U(p_vals[candidates_idx], n_vals[candidates_idx],
                                     q_vals[candidates_idx], alpha, Cstar_at_alpha)
-        n_u <- length(U)
+        n_u      <- length(U)
         theoretical <- stats::ppoints(n_u)
-        observed <- sort(U)
+        observed    <- sort(U)
+
+        # OLS best-fit line (C* is estimated, so 45-degree line is inappropriate)
+        fit_line <- stats::lm(observed ~ theoretical)
+        int_ols  <- as.numeric(stats::coef(fit_line)[1])
+        slp_ols  <- as.numeric(stats::coef(fit_line)[2])
+
         qqDf <- data.frame(theoretical = theoretical, observed = observed)
 
         p3 <- ggplot2::ggplot(qqDf, ggplot2::aes(x = theoretical, y = observed)) +
           ggplot2::geom_point(size = 1.5) +
-          ggplot2::geom_abline(intercept = 0, slope = 1, color = "red", linewidth = 1) +
+          ggplot2::geom_abline(intercept = int_ols, slope = slp_ols,
+                               color = "red", linewidth = 1) +
           ggplot2::labs(x = "Theoretical Unif(0,1) Quantiles",
                         y = "Observed U_i Quantiles",
                         title = paste0("Diagnostic QQ-Plot (alpha = ", alpha,
@@ -164,19 +151,36 @@ ejabAnalysis <- function(jaspResults, dataset, options) {
           jaspGraphs::geom_rangeframe() +
           jaspGraphs::themeJaspRaw()
 
-        # Add simultaneous confidence band if enough points
+        # MC-calibrated simultaneous confidence band, transformed through OLS fit
         if (n_u >= 2) {
+          set.seed(1)
+          B     <- 10000
           i_seq <- seq_len(n_u)
-          lower <- stats::qbeta(0.025, i_seq, n_u + 1 - i_seq)
-          upper <- stats::qbeta(0.975, i_seq, n_u + 1 - i_seq)
-          bandDf <- data.frame(theoretical = theoretical,
-                               lower = lower, upper = upper)
+          U_sim <- apply(matrix(stats::runif(n_u * B), nrow = n_u, ncol = B), 2, sort)
+
+          coverage_hat <- function(p) {
+            tail <- (1 - p) / 2
+            L <- stats::qbeta(tail,     i_seq, n_u + 1 - i_seq)
+            U <- stats::qbeta(1 - tail, i_seq, n_u + 1 - i_seq)
+            mean(colSums(U_sim >= L & U_sim <= U) == n_u)
+          }
+          f <- function(p) coverage_hat(p) - 0.95
+          p_star <- if (f(0.95) >= 0) 0.95 else
+            stats::uniroot(f, lower = 0.95, upper = 0.9999, tol = 1e-4)$root
+
+          tail_star <- (1 - p_star) / 2
+          lower_raw <- stats::qbeta(tail_star,     i_seq, n_u + 1 - i_seq)
+          upper_raw <- stats::qbeta(1 - tail_star, i_seq, n_u + 1 - i_seq)
+
+          # Transform bands through OLS fit
+          lower <- int_ols + slp_ols * lower_raw
+          upper <- int_ols + slp_ols * upper_raw
+
+          bandDf <- data.frame(theoretical = theoretical, lower = lower, upper = upper)
           p3 <- p3 +
-            ggplot2::geom_line(data = bandDf,
-                               ggplot2::aes(x = theoretical, y = lower),
+            ggplot2::geom_line(data = bandDf, ggplot2::aes(x = theoretical, y = lower),
                                linetype = "dashed", color = "grey50") +
-            ggplot2::geom_line(data = bandDf,
-                               ggplot2::aes(x = theoretical, y = upper),
+            ggplot2::geom_line(data = bandDf, ggplot2::aes(x = theoretical, y = upper),
                                linetype = "dashed", color = "grey50")
         }
 

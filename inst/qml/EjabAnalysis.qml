@@ -74,9 +74,9 @@ Form
     title: qsTr("Plots")
     CheckBox {
       name: "showCalibrationPlot"
-      label: qsTr("Calibration plot (adaptive threshold)")
+      label: qsTr("Calibration plot (integral threshold)")
       checked: true
-      info: qsTr("Displays three plots: (1) the observed contradiction rate vs. α with the ideal diagonal reference; (2) the estimated C\\*(α) as a function of α; and (3) a diagnostic QQ-plot of the flagged candidates.")
+      info: qsTr("Displays two plots: (1) the observed contradiction rate vs. α with the ideal diagonal reference; and (2) a diagnostic QQ-plot of the flagged candidates.")
     }
     CheckBox {
       name: "showDataSummaryPlot"
