@@ -8,36 +8,45 @@ ejabAnalysis <- function(jaspResults, dataset, options) {
     return()
 
   # Read data
-  p_vals <- dataset[[options$p]]
-  n_vals <- dataset[[options$n]]
-  q_vals <- dataset[[options$q]]
-  study_num  <- dataset[[options$study_nums]]
+  p_vals    <- dataset[[options$p]]
+  n_vals    <- dataset[[options$n]]
+  q_vals    <- dataset[[options$q]]
+  study_num <- dataset[[options$study_nums]]
   complete_cases <- complete.cases(p_vals, n_vals, q_vals, study_num) &
-                  p_vals > 0 & p_vals < 1 &
-                  n_vals > 1 &
-                  q_vals >= 1
-  p_vals = p_vals[complete_cases]
-  n_vals = n_vals[complete_cases]
-  q_vals = q_vals[complete_cases]
-  study_num = study_num[complete_cases]
+                   p_vals > 0 & p_vals < 1 &
+                   n_vals > 1 &
+                   q_vals >= 1
+  p_vals    <- p_vals[complete_cases]
+  n_vals    <- n_vals[complete_cases]
+  q_vals    <- q_vals[complete_cases]
+  study_num <- study_num[complete_cases]
+
+  if (length(p_vals) == 0) {
+    errorContainer <- createJaspContainer(gettext("eJAB Analysis"))
+    errorContainer$setError(gettext(
+      "No usable rows after filtering. The analysis requires p in (0, 1), n > 1, and q >= 1, with no missing values in any assigned column."
+    ))
+    jaspResults[["errorContainer"]] <- errorContainer
+    return()
+  }
 
   # Extract options, ensuring they are scalars
-  alpha <- as.numeric(options$alpha)[1]
-  up    <- as.numeric(options$up)[1]
+  alpha      <- as.numeric(options$alpha)[1]
+  up         <- as.numeric(options$up)[1]
   grid_range <- c(as.numeric(options$lowerBound)[1], as.numeric(options$upperBound)[1])
-  grid_n <- as.integer(options$grid_size)[1]
+  grid_n     <- as.integer(options$grid_size)[1]
 
-  # Compute eJAB values
-  ejab_vals <- ejabT1E::ejab01(p_vals, n_vals, q_vals)
+  # Compute eJAB values (vendored from ejabT1E; see R/ejabCore.R)
+  ejab_vals <- ejab01(p_vals, n_vals, q_vals)
 
   # Estimate C* using the integral method (minimises integrated squared deviation)
-  fit <- ejabT1E::estimate_Cstar(p_vals, ejab_vals, up = up,
-                                  grid_range = grid_range, grid_n = grid_n)
-  Cstar_at_alpha <- fit$Cstar
+  fit <- estimate_Cstar(p_vals, ejab_vals, up = up,
+                        grid_range = grid_range, grid_n = grid_n)
+  Cstar_at_alpha     <- fit$Cstar
   objective_at_alpha <- fit$objective
 
   # Detect candidates using C* at the specified alpha
-  candidates_idx <- ejabT1E::detect_type1(p_vals, ejab_vals, alpha, Cstar_at_alpha)
+  candidates_idx <- detect_type1(p_vals, ejab_vals, alpha, Cstar_at_alpha)
 
   # Summary table
   if (is.null(jaspResults[["summaryContainer"]])) {
@@ -99,19 +108,20 @@ ejabAnalysis <- function(jaspResults, dataset, options) {
     # Plot 1: Calibration curve - observed proportion vs alpha
     if (is.null(jaspResults[["calibrationCurve"]])) {
       alpha_grid <- seq(0, up, length.out = 200)[-1]
-      N_cal <- length(p_vals)
+      N_cal <- sum(p_vals < up)
       proportions <- vapply(alpha_grid, function(a)
         sum(p_vals < a & ejab_vals > Cstar_at_alpha) / N_cal, numeric(1))
-      calDf <- data.frame(alpha = alpha_grid, proportion = proportions)
-      refDf <- data.frame(alpha = c(0, up), proportion = c(0, 1))
+      keep <- alpha_grid <= alpha
+      calDf <- data.frame(alpha = alpha_grid[keep], proportion = proportions[keep])
+      refDf <- data.frame(alpha = c(0, alpha), proportion = c(0, alpha / up))
 
       p1 <- ggplot2::ggplot(calDf, ggplot2::aes(x = alpha, y = proportion)) +
         ggplot2::geom_line(linewidth = 1) +
         ggplot2::geom_line(data = refDf, linetype = "dashed", color = "red", linewidth = 1) +
-        ggplot2::scale_x_continuous(limits = c(0, up)) +
-        ggplot2::scale_y_continuous(limits = c(0, max(proportions, 1))) +
+        ggplot2::scale_x_continuous(limits = c(0, alpha)) +
+        ggplot2::scale_y_continuous(limits = c(0, max(calDf$proportion, alpha / up) * 1.1)) +
         ggplot2::labs(x = expression(alpha), y = "Observed Proportion",
-                      title = "Calibration using integral C*(alpha)") +
+                      title = bquote("Calibration Curve (" ~ alpha <= .(alpha) ~ ")")) +
         jaspGraphs::geom_rangeframe() +
         jaspGraphs::themeJaspRaw()
 
@@ -127,7 +137,7 @@ ejabAnalysis <- function(jaspResults, dataset, options) {
     # Plot 3: Diagnostic QQ-plot (logic from ejabT1E::diagnostic_qqplot)
     if (is.null(jaspResults[["qqPlot"]])) {
       if (length(candidates_idx) > 0) {
-        U <- ejabT1E::diagnostic_U(p_vals[candidates_idx], n_vals[candidates_idx],
+        U <- diagnostic_U(p_vals[candidates_idx], n_vals[candidates_idx],
                                     q_vals[candidates_idx], alpha, Cstar_at_alpha)
         n_u      <- length(U)
         theoretical <- stats::ppoints(n_u)

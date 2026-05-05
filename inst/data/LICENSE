@@ -1,0 +1,32 @@
+Bundled datasets in this directory are redistributed under their original
+licenses, summarised below. The R package code itself is GPL (>= 2); see the
+top-level LICENSE file. The licenses below apply only to the data.
+
+==============================================================================
+rpp_data.csv  -  Reproducibility Project: Psychology
+==============================================================================
+Source:   Open Science Collaboration (2015). Estimating the reproducibility
+          of psychological science. Science, 349(6251), aac4716.
+          https://doi.org/10.1126/science.aac4716
+OSF:      https://osf.io/ezcuj/
+License:  CC0 1.0 Universal (public domain dedication).
+          https://creativecommons.org/publicdomain/zero/1.0/legalcode
+
+CC0 waives all rights; redistribution under any license (including GPL) is
+unrestricted. Attribution is offered as courtesy.
+
+==============================================================================
+rpcb_data.csv  -  Reproducibility Project: Cancer Biology
+==============================================================================
+Source:   Errington, T. M., Mathur, M., Soderberg, C. K., Denis, A.,
+          Perfito, N., Iorns, E., & Nosek, B. A. (2021). Investigating the
+          replicability of preclinical cancer biology. eLife, 10, e71601.
+          https://doi.org/10.7554/eLife.71601
+OSF:      https://osf.io/e5nvr/  (umbrella: https://osf.io/e81xl/)
+License:  Creative Commons Attribution 4.0 International (CC BY 4.0).
+          https://creativecommons.org/licenses/by/4.0/legalcode
+
+Required attribution: Errington et al. (2021), eLife 10:e71601, used under
+CC BY 4.0. No modifications were made to the underlying values; columns were
+selected and renamed for compatibility with the eJAB analysis schema
+(study_id, p, n, q).

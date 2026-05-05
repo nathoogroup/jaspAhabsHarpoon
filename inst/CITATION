@@ -1,0 +1,21 @@
+citHeader("To cite jaspAhabsHarpoon in publications, please use:")
+
+bibentry(
+  bibtype  = "Unpublished",
+  title    = "Ahab's Harpoon: Predicting Type I Errors with Generalized Approximate Objective Bayes Factors",
+  author   = c(
+    person("Evan", "Strasdin"),
+    person("Puneet", "Velidi"),
+    person("Zhengxiao", "Wei"),
+    person(given = "Farouk S.", family = "Nathoo")
+  ),
+  year     = "2026",
+  note     = "Manuscript in preparation",
+  institution = "Department of Mathematics and Statistics, University of Victoria",
+  textVersion = paste(
+    "Strasdin, E., Velidi, P., Wei, Z., & Nathoo, F. S. (2026).",
+    "Ahab's Harpoon: Predicting Type I Errors with Generalized Approximate",
+    "Objective Bayes Factors. Manuscript in preparation,",
+    "Department of Mathematics and Statistics, University of Victoria."
+  )
+)

@@ -1,6 +1,6 @@
-# Ahab's Harpoon
+# jaspAhabsHarpoon
 
-A JASP module for detecting candidate Type I errors in collections of hypothesis test results using Bayes-frequentist contradictions.
+A JASP module for detecting candidate Type I errors in collections of hypothesis test results using Bayes/NHST contradictions.
 
 ## What it does
 
@@ -20,20 +20,28 @@ Each row should represent one hypothesis test result with columns for:
 - **q** — test dimension (number of parameters tested; ≥ 1)
 - **Study ID** — an identifier for each result
 
-An example dataset (the Reproducibility Project: Psychology) is included as `inst/data/rpp_data.csv`.
+Two example datasets are bundled, both sharing this schema:
+
+- `inst/data/rpp_data.csv`: Reproducibility Project: Psychology. 132 replication studies. Open Science Collaboration (2015), *Science* 349:aac4716.
+- `inst/data/rpcb_data.csv`: Reproducibility Project: Cancer Biology. 132 pre-clinical effects. Errington et al. (2021), *eLife* 10:e71601.
+
+Pre-configured analyses live in `inst/examples/`:
+
+- `inst/examples/rpp_analysis.jasp`
+- `inst/examples/rpcb_analysis.jasp`
 
 ## Usage
 
 1. Open JASP and load the module as a development module
-2. Load your dataset (or open `rpp_analysis.jasp` for a pre-configured example)
+2. Open one of the example `.jasp` files in `inst/examples/`, or load your own dataset
 3. Open **Ahab's Harpoon → eJAB Analysis**
 4. Assign your p-value, sample size, test dimension, and study ID columns
 5. Adjust α and other parameters as needed
 
 ## Reference
 
-Nathoo, F. S., Velidi, P., Wei, Z., & Strasdin, E. (2026). *Detecting Type I errors through Bayes/NHST conflict using eJAB*. Unpublished manuscript.
+Strasdin, E., Velidi, P., Wei, Z., & Nathoo, F. S. (2026). *Ahab's Harpoon: Predicting Type I Errors with Generalized Approximate Objective Bayes Factors*. Manuscript in preparation, Department of Mathematics and Statistics, University of Victoria.
 
 ## License
 
-GPL (>= 2)
+Code: GPL (>= 2). Bundled datasets retain their upstream licenses; see `inst/data/LICENSE` for details (RPP: CC0 1.0; RPCB: CC BY 4.0).

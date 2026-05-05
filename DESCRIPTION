@@ -1,22 +1,29 @@
-Package: AhabsHarpoon
+Package: jaspAhabsHarpoon
 Type: Package
-Title: JASP Module for detecting type I errors with approximate objective Bayes factors.
-Version: 0.1.0
-Date: 2020-10-15
-Author: Nathoo Group
-Website: nathoogroup.ca
-Maintainer: Evan Strasdin <evanastrasdin@uvic.ca>
-Description: Example module showing basic functionality. Use it for inspiration when creating your own module.
+Title: Detecting Type I Errors via Bayes/NHST Conflict
+Version: 0.1
+Date: 2026-05-05
+Authors@R: c(
+    person("Evan", "Strasdin", email = "evn.strsdn@pm.me", role = c("aut", "cre")),
+    person("Puneet", "Velidi", role = "aut"),
+    person("Zhengxiao", "Wei", role = "aut"),
+    person(given = "Farouk S.", family = "Nathoo", role = "aut")
+  )
+Description: JASP module for identifying candidate Type I errors in
+    collections of NHST results. Computes the eJAB01 approximate objective
+    Bayes factor for each result, estimates a calibrated threshold C* via
+    minimisation of an integrated squared deviation objective, and flags
+    results where the p-value rejects the null while eJAB01 supports it.
+    Provides calibration, diagnostic QQ, and data summary plots.
 License: GPL (>= 2)
 Encoding: UTF-8
 Imports:
-  jaspBase,
-  jaspGraphs,
-  ejabT1E,
-  ggplot2
+    jaspBase,
+    jaspGraphs,
+    ggplot2
 Suggests:
-  testthat
+    testthat
 Remotes:
-  jasp-stats/jaspBase,
-  jasp-stats/jaspGraphs,
-  nathoogroup/ejabT1E/ejabT1E
+    jasp-stats/jaspBase,
+    jasp-stats/jaspGraphs
+RoxygenNote: 7.3.2

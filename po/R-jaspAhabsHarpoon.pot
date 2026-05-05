@@ -1,0 +1,70 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: jaspAhabsHarpoon 0.1\n"
+"POT-Creation-Date: 2026-05-05\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "eJAB Analysis"
+msgstr ""
+
+msgid "eJAB Summary"
+msgstr ""
+
+msgid "C*(α)"
+msgstr ""
+
+msgid "Objective"
+msgstr ""
+
+msgid "Candidates"
+msgstr ""
+
+msgid "Total"
+msgstr ""
+
+msgid "C*(α) is the C* value corresponding to the selected α = %s"
+msgstr ""
+
+msgid "Candidate Type I Errors"
+msgstr ""
+
+msgid "Study ID"
+msgstr ""
+
+msgid "p-value"
+msgstr ""
+
+msgid "n"
+msgstr ""
+
+msgid "q"
+msgstr ""
+
+msgid "eJAB01"
+msgstr ""
+
+msgid "No candidate Type I errors detected."
+msgstr ""
+
+msgid "Calibration Curve"
+msgstr ""
+
+msgid "Diagnostic QQ-Plot"
+msgstr ""
+
+msgid "No candidate Type I errors detected; cannot produce QQ-plot."
+msgstr ""
+
+msgid "Data Summary: ln(eJAB01) vs pValue"
+msgstr ""
+
+msgid "No data available for plotting."
+msgstr ""
+
+msgid "No usable rows after filtering. The analysis requires p in (0, 1), n > 1, and q >= 1, with no missing values in any assigned column."
+msgstr ""
