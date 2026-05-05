@@ -216,38 +216,48 @@ ejabAnalysis <- function(jaspResults, dataset, options) {
       plotDf <- data.frame(pValue = p_vals, logJAB = logJAB,
                            candidate = is_candidate)
 
+      sig    <- p_vals < alpha
+      yr     <- range(c(logJAB[sig], log(Cstar_at_alpha)), finite = TRUE) + c(-0.5, 0.5)
+      ytrans <- scales::pseudo_log_trans(sigma = 1)
+      cand_breaks <- c(-1000, -300, -100, -30, -10, -5, -3, -2, -1, 0, 1, 2, 3, 5, 10)
+      ybreaks <- cand_breaks[cand_breaks >= yr[1] & cand_breaks <= yr[2]]
+
       bands <- data.frame(
-        ymin = c(-15, log(1/3), log(3)),
-        ymax = c(log(1/3), log(3), 9),
-        fill = c("green", "grey80", "red")
+        ymin = c(yr[1],    log(1/3), log(3)),
+        ymax = c(log(1/3), log(3),   yr[2]),
+        fill = c("green",  "grey80", "red")
       )
+      bands <- bands[bands$ymax > yr[1] & bands$ymin < yr[2], , drop = FALSE]
+      bands$ymin <- pmax(bands$ymin, yr[1])
+      bands$ymax <- pmin(bands$ymax, yr[2])
 
       p4 <- ggplot2::ggplot(plotDf, ggplot2::aes(x = pValue, y = logJAB)) +
         ggplot2::geom_rect(data = bands,
                            ggplot2::aes(xmin = 0, xmax = alpha, ymin = ymin, ymax = ymax, fill = fill),
                            alpha = 0.15, inherit.aes = FALSE) +
         ggplot2::scale_fill_identity() +
-        ggplot2::geom_point(size = 1.5, color = "steelblue") +
+        ggplot2::geom_point(ggplot2::aes(color = candidate), size = 1.5, show.legend = FALSE) +
+        ggplot2::scale_color_manual(values = c(`TRUE` = "red", `FALSE` = "steelblue")) +
         ggplot2::geom_vline(xintercept = alpha, linetype = "dashed") +
-        ggplot2::geom_hline(yintercept = log(1/3), linetype = "dashed") +
-        ggplot2::geom_hline(yintercept = log(3), linetype = "dashed") +
-        ggplot2::coord_cartesian(xlim = c(0, alpha), ylim = c(-3, 3)) +
+        ggplot2::geom_hline(yintercept = log(1/3), linetype = "dashed", color = "grey40") +
+        ggplot2::geom_hline(yintercept = log(3),   linetype = "dashed", color = "grey40") +
+        ggplot2::geom_hline(ggplot2::aes(yintercept = log(Cstar_at_alpha),
+                                         linetype = paste0("C*(alpha) = ",
+                                                           signif(Cstar_at_alpha, 4))),
+                            color = "red") +
+        ggplot2::scale_linetype_manual(name = NULL, values = "dashed") +
+        ggplot2::coord_cartesian(xlim = c(0, alpha), ylim = yr) +
         ggplot2::scale_x_continuous(name = "p-value") +
-        ggplot2::scale_y_continuous(name = "ln(eJAB01)", breaks = seq(-3, 3, by = 1)) +
-        ggplot2::labs(title = paste0("ln(eJAB01) vs p-value  (alpha = ", alpha,
-                                     ", C*(alpha) = ", round(Cstar_at_alpha, 4), ")")) +
+        ggplot2::scale_y_continuous(name = "ln(eJAB01)", trans = ytrans, breaks = ybreaks) +
+        ggplot2::labs(title = paste0("ln(eJAB01) vs p-value  (alpha = ", alpha, ")")) +
         jaspGraphs::geom_rangeframe() +
-        jaspGraphs::themeJaspRaw()
-
-      # Highlight candidate T1Es
-      if (any(is_candidate)) {
-        candDf <- plotDf[is_candidate, ]
-        p4 <- p4 +
-          ggplot2::geom_point(data = candDf,
-                              ggplot2::aes(x = pValue, y = logJAB),
-                              shape = 1, size = 3, color = "red", stroke = 1.2,
-                              inherit.aes = FALSE)
-      }
+        jaspGraphs::themeJaspRaw() +
+        ggplot2::theme(legend.position = c(0.98, 0.02),
+                       legend.justification = c(1, 0),
+                       legend.background = ggplot2::element_rect(
+                         fill = scales::alpha("white", 0.85), color = "grey70"),
+                       legend.key = ggplot2::element_rect(fill = NA),
+                       legend.margin = ggplot2::margin(2, 4, 2, 4))
 
       dataPlot <- createJaspPlot(plot = p4,
                                   title = gettext("Data Summary: ln(eJAB01) vs pValue"),
